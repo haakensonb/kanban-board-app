@@ -1,0 +1,16 @@
+# Run by specifying file with command "docker-compose -f docker-compose.dev.yml up -d --build"
+
+# Dev container version only needs the correct java image installed.
+# It does not need to build and package the jar.
+version: '3.4'
+services:
+  kanban-board:
+    image: adoptopenjdk/openjdk11:alpine
+    # Bind mount
+    volumes:
+      - .:/app
+    working_dir: /app/kanban-board
+    # Spring command so that hot-reloading works during dev.
+    command: ./mvnw spring-boot:run
+    ports:
+      - 8080:8080
