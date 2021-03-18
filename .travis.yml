@@ -1,9 +1,6 @@
-language: java
-jdk:
-  - openjdk11
 services:
   - docker
-before_install:
-  - docker build -t kanban-board -f kanban-board/DockerFile .
+before_script:
+  - docker-compose up -d --build
 script:
-  - docker run -e CI=true kanban-board mvn test
+  - docker-compose exec kanban-board mvn test
