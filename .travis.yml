@@ -1,5 +1,7 @@
 language: generic
 
+install: mvn
+
 services:
   - docker
 
