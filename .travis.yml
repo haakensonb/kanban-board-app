@@ -1,15 +1,13 @@
 language: generic
 
-install: mvn
-
 services:
   - docker
 
 before_script:
   - docker-compose up -d --build
 
-script:
-  - docker-compose exec kanban-board mvn test
+# Docker runs tests during container build stage and the build will fail if they fail.
+# So, for now, there is no need to actually run any scripts post docker build.
 
 after_script:
   - docker-compose down
