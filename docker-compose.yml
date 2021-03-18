@@ -1,0 +1,8 @@
+version: '3.4'
+services:
+  kanban-board:
+    build:
+      context: kanban-board
+      dockerfile: DockerFile
+    ports:
+      - 8080:8080
