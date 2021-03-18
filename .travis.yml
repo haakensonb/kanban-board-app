@@ -1,6 +1,13 @@
+language: generic
+
 services:
   - docker
+
 before_script:
   - docker-compose up -d --build
+
 script:
   - docker-compose exec kanban-board mvn test
+
+after_script:
+  - docker-compose down
