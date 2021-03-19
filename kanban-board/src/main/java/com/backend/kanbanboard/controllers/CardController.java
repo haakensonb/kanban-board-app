@@ -37,16 +37,7 @@ public class CardController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/cards")
     Card newCard(@RequestBody Card newCard) {
-        // If no id is given, then save and autogenerate an id.
-        if(newCard.getId() == null){
-            return repo.save(newCard);
-        } else {
-            // If id already exists, return it
-            // otherwise create object with the specified id.
-            return repo.findById(newCard.getId()).orElseGet(() -> {
-                return repo.save(newCard);
-            });
-        }
+        return repo.save(newCard);
         
     }
 

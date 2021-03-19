@@ -59,6 +59,15 @@ public class CardControllerTests {
     }
 
     @Test
+    public void testCreateCardIdPropertyIsReadOnly() throws Exception {
+        Card card1 = new Card("Test", "");
+        card1.setId(1L);
+
+        mockMvc.perform(post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card1)))
+            .andExpect(jsonPath("$.id").doesNotExist());
+    }
+
+    @Test
     public void testUpdateCard() throws Exception {
         Card card = new Card("Updated Test Card", "blash");
         Mockito.doReturn(Optional.of(card))
