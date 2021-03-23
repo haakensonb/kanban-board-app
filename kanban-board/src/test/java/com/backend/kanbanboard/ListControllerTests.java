@@ -10,9 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Optional;
 
-import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
-import com.backend.kanbanboard.repositories.CardRepository;
 import com.backend.kanbanboard.repositories.ListRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,7 +29,7 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @AutoConfigureMockMvc
 @EnableWebMvc
 @ActiveProfiles("test")
-public class CardControllerTests {
+public class ListControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
@@ -39,62 +37,51 @@ public class CardControllerTests {
     private ObjectMapper objmap;
 
     @MockBean
-    private CardRepository mockRepo;
-
-    @MockBean
-    private ListRepository mockListRepo;
+    private ListRepository mockRepo;
 
     @Test
-    public void testGetAllCards() throws Exception {
-        mockMvc.perform(get("/cards")).andExpect(status().isOk());
+    public void testGetAllLists() throws Exception {
+        mockMvc.perform(get("/lists")).andExpect(status().isOk());
     }
 
     @Test
-    public void testGetCardById() throws Exception {
+    public void testGetListById() throws Exception {
         ListModel list = new ListModel("list1");
-        Card card = new Card("title", "description", list);
-        Mockito.doReturn(Optional.of(card)).when(mockRepo).findById(1L);
+        Mockito.doReturn(Optional.of(list)).when(mockRepo).findById(1L);
 
-        mockMvc.perform(get("/cards/1")).andExpect(status().isOk());
+        mockMvc.perform(get("/lists/1")).andExpect(status().isOk());
     }
 
     @Test
-    public void testCreateCard() throws Exception {
+    public void testCreateList() throws Exception {
         ListModel list = new ListModel(1L, "list1");
-        Mockito.doReturn(Optional.of(list)).when(mockListRepo).findById(1L);
-        mockMvc.perform(post("/cards").contentType(MediaType.APPLICATION_JSON)
-                .content(objmap.writeValueAsString(new Card("Test Card 3", "blah", list))))
+        mockMvc.perform(post("/lists").contentType(MediaType.APPLICATION_JSON)
+                .content(objmap.writeValueAsString(list)))
                 .andExpect(status().isCreated());
     }
 
     @Test
-    public void testCreateCardIdPropertyIsReadOnly() throws Exception {
+    public void testCreateListIdPropertyIsReadOnly() throws Exception {
         ListModel list = new ListModel(1L, "list1");
-        Mockito.doReturn(Optional.of(list)).when(mockListRepo).findById(1L);
-        Card card1 = new Card("Test", "", list);
-        card1.setId(1L);
 
         mockMvc.perform(
-                post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card1)))
+                post("/lists").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
                 .andExpect(jsonPath("$.id").doesNotExist());
     }
 
     @Test
-    public void testUpdateCard() throws Exception {
-        ListModel list = new ListModel("list1");
-        Card card = new Card("Updated Test Card", "blash", list);
-        Mockito.doReturn(Optional.of(card)).when(mockRepo).findById(1L);
+    public void testUpdateList() throws Exception {
+        ListModel list = new ListModel(1L, "list1");
 
-        Mockito.when(mockRepo.save(any(Card.class))).thenReturn(card);
+        Mockito.when(mockRepo.save(any(ListModel.class))).thenReturn(list);
 
         mockMvc.perform(
-                put("/cards/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.title").value("Updated Test Card"))
-                .andExpect(jsonPath("$.description").value("blash"));
+                put("/lists/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.name").value("list1"));
     }
 
     @Test
     public void testDeleteCard() throws Exception {
-        mockMvc.perform(delete("/cards/1")).andExpect(status().isOk());
+        mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
     }
 }

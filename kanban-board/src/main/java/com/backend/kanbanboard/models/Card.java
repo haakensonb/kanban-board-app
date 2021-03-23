@@ -25,13 +25,9 @@ public class Card {
 
     private String description;
 
-    // @ManyToOne(fetch = FetchType.LAZY)
     @ManyToOne
     @JoinColumn(nullable = false)
     private ListModel list;
-
-    // @Column(name = "list_id", nullable = false)
-    // private Long listId;
 
     public Card() {
     }
@@ -89,19 +85,19 @@ public class Card {
             return false;
         }
         Card card = (Card) o;
-        return Objects.equals(getId(), card.getId()) && Objects.equals(title, card.title)
-                && Objects.equals(description, card.description);
+        return Objects.equals(id, card.id) && Objects.equals(title, card.title)
+                && Objects.equals(description, card.description) && Objects.equals(list, card.list);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), title, description);
+        return Objects.hash(id, title, description, list);
     }
 
     @Override
     public String toString() {
         return "{" + " id='" + getId() + "'" + ", title='" + getTitle() + "'" + ", description='" + getDescription()
-                + "'" + "}";
+                + "'" + ", list='" + getList() + "'" + "}";
     }
 
 }
