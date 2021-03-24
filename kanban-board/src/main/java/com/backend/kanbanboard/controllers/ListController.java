@@ -69,6 +69,9 @@ public class ListController {
 
     @DeleteMapping("/lists/{id}")
     void deleteCard(@PathVariable Long id) {
+        // First, delete any Cards connected to this List.
+        cardRepo.deleteByListId(id);
+
         listRepo.deleteById(id);
     }
 

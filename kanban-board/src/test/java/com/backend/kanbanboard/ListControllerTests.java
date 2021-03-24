@@ -1,6 +1,8 @@
 package com.backend.kanbanboard;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,9 +10,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
+import com.backend.kanbanboard.repositories.CardRepository;
 import com.backend.kanbanboard.repositories.ListRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,6 +44,9 @@ public class ListControllerTests {
 
     @MockBean
     private ListRepository mockRepo;
+
+    @MockBean
+    private CardRepository mockCardRepo;
 
     @Test
     public void testGetAllLists() throws Exception {
@@ -81,7 +90,19 @@ public class ListControllerTests {
     }
 
     @Test
-    public void testDeleteCard() throws Exception {
+    public void testDeleteList() throws Exception {
         mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testDeleteListAndCardOnList() throws Exception {
+        List<Card> mockList = new ArrayList<Card>();
+        mockList.add(Mockito.mock(Card.class));
+        
+        Mockito.doReturn(mockList).when(mockCardRepo).findByListId(1L);
+
+        mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
+
+        verify(mockCardRepo, times(1)).deleteByListId(1L);
     }
 }
