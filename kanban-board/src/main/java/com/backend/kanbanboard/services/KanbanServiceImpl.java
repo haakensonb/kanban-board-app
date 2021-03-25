@@ -2,10 +2,13 @@ package com.backend.kanbanboard.services;
 
 import java.util.List;
 
+import com.backend.kanbanboard.exceptions.BoardNotFoundException;
 import com.backend.kanbanboard.exceptions.CardNotFoundException;
 import com.backend.kanbanboard.exceptions.ListNotFoundException;
+import com.backend.kanbanboard.models.Board;
 import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
+import com.backend.kanbanboard.repositories.BoardRepository;
 import com.backend.kanbanboard.repositories.CardRepository;
 import com.backend.kanbanboard.repositories.ListRepository;
 
@@ -17,9 +20,12 @@ public class KanbanServiceImpl implements KanbanService {
 
     private final ListRepository listRepo;
 
-    public KanbanServiceImpl(CardRepository cardRepo, ListRepository listRepo) {
+    private final BoardRepository boardRepo;
+
+    public KanbanServiceImpl(CardRepository cardRepo, ListRepository listRepo, BoardRepository boardRepo) {
         this.cardRepo = cardRepo;
         this.listRepo = listRepo;
+        this.boardRepo = boardRepo;
     }
 
     // Card service methods
@@ -90,28 +96,37 @@ public class KanbanServiceImpl implements KanbanService {
     }
 
     // Board service methods
-    // public List<Board> getAllBoards(){
-
-    // }
+    public List<Board> getAllBoards(){
+        return boardRepo.findAll();
+    }
     
-    // public Board getBoard(Long id){
-
-    // }
+    public Board getBoard(Long id){
+        return boardRepo.findById(id).orElseThrow(() -> new BoardNotFoundException(id));
+    }
     
-    // public List<ListModel> getBoardLists(Long id){
-
-    // }
+    public List<ListModel> getBoardLists(Long id){
+        Board board = boardRepo.findById(id).orElseThrow(() -> new BoardNotFoundException(id));
+        return listRepo.findByBoardId(board.getId());
+    }
     
-    // public Board createBoard(Board newBoard){
-
-    // }
+    public Board createBoard(Board newBoard){
+        return boardRepo.save(newBoard);
+    }
     
-    // public Board updateBoard(Board newBoard, Long id){
-
-    // }
+    public Board updateBoard(Board newBoard, Long id){
+        return boardRepo.findById(id).map(board -> {
+            // Update board if it exists.
+            board.setName(newBoard.getName());
+            return boardRepo.save(board);
+        }).orElseGet(() -> {
+            // Otherwise create new board.
+            newBoard.setId(id);
+            return boardRepo.save(newBoard);
+        });
+    }
     
-    // public void deleteBoard(Long id){
-
-    // }
+    public void deleteBoard(Long id){
+        boardRepo.deleteById(id);
+    }
     
 }

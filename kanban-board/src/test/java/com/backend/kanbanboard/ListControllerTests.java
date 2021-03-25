@@ -94,19 +94,4 @@ public class ListControllerTests {
         mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
     }
 
-    // Fix to make sure Card is delete. Check exception thrown?
-    // @Test
-    // public void testDeleteListAndCardOnList() throws Exception {
-    //     list.setId(1L);
-    //     kanbanService.createList(list);
-    //     card.setId(1L);
-    //     card.setList(list);
-    //     kanbanService.createCard(card);
-
-    //     mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
-
-    //     verify(kanbanService, times(1)).deleteList(1L);
-
-    //     kanbanService.getCard(1L);
-    // }
 }

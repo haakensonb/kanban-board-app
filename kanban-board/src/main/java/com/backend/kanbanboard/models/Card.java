@@ -13,6 +13,9 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 @Entity
 @Table(name = "card")
 public class Card {
@@ -27,6 +30,8 @@ public class Card {
 
     @ManyToOne
     @JoinColumn(nullable = false)
+    // Card will be deleted if ListModel is deleted.
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ListModel list;
 
     public Card() {
