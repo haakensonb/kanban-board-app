@@ -1,8 +1,8 @@
 package com.backend.kanbanboard;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,18 +10,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
+import com.backend.kanbanboard.models.Board;
 import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
-import com.backend.kanbanboard.repositories.CardRepository;
-import com.backend.kanbanboard.repositories.ListRepository;
+import com.backend.kanbanboard.services.KanbanService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,6 +32,15 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 @ActiveProfiles("test")
 public class ListControllerTests {
+    @InjectMocks
+    private Card card;
+
+    @InjectMocks
+    private ListModel list;
+
+    @InjectMocks
+    private Board board;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -43,10 +48,7 @@ public class ListControllerTests {
     private ObjectMapper objmap;
 
     @MockBean
-    private ListRepository mockRepo;
-
-    @MockBean
-    private CardRepository mockCardRepo;
+    private KanbanService kanbanService;
 
     @Test
     public void testGetAllLists() throws Exception {
@@ -55,15 +57,15 @@ public class ListControllerTests {
 
     @Test
     public void testGetListById() throws Exception {
-        ListModel list = new ListModel("list1");
-        Mockito.doReturn(Optional.of(list)).when(mockRepo).findById(1L);
+        doReturn(list).when(kanbanService).getList(anyLong());
 
         mockMvc.perform(get("/lists/1")).andExpect(status().isOk());
     }
 
     @Test
     public void testCreateList() throws Exception {
-        ListModel list = new ListModel(1L, "list1");
+        doReturn(list).when(kanbanService).createList(any(ListModel.class));
+
         mockMvc.perform(post("/lists").contentType(MediaType.APPLICATION_JSON)
                 .content(objmap.writeValueAsString(list)))
                 .andExpect(status().isCreated());
@@ -71,8 +73,7 @@ public class ListControllerTests {
 
     @Test
     public void testCreateListIdPropertyIsReadOnly() throws Exception {
-        ListModel list = new ListModel(1L, "list1");
-
+        // TODO: Reevaluate this test. Not sure that it is working properly...
         mockMvc.perform(
                 post("/lists").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
                 .andExpect(jsonPath("$.id").doesNotExist());
@@ -80,9 +81,8 @@ public class ListControllerTests {
 
     @Test
     public void testUpdateList() throws Exception {
-        ListModel list = new ListModel(1L, "list1");
-
-        Mockito.when(mockRepo.save(any(ListModel.class))).thenReturn(list);
+        list.setName("list1");
+        doReturn(list).when(kanbanService).updateList(any(ListModel.class), anyLong());
 
         mockMvc.perform(
                 put("/lists/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
@@ -94,15 +94,19 @@ public class ListControllerTests {
         mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
     }
 
-    @Test
-    public void testDeleteListAndCardOnList() throws Exception {
-        List<Card> mockList = new ArrayList<Card>();
-        mockList.add(Mockito.mock(Card.class));
-        
-        Mockito.doReturn(mockList).when(mockCardRepo).findByListId(1L);
+    // Fix to make sure Card is delete. Check exception thrown?
+    // @Test
+    // public void testDeleteListAndCardOnList() throws Exception {
+    //     list.setId(1L);
+    //     kanbanService.createList(list);
+    //     card.setId(1L);
+    //     card.setList(list);
+    //     kanbanService.createCard(card);
 
-        mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
+    //     mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
 
-        verify(mockCardRepo, times(1)).deleteByListId(1L);
-    }
+    //     verify(kanbanService, times(1)).deleteList(1L);
+
+    //     kanbanService.getCard(1L);
+    // }
 }

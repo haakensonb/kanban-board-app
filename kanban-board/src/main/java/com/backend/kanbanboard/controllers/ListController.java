@@ -2,11 +2,9 @@ package com.backend.kanbanboard.controllers;
 
 import java.util.List;
 
-import com.backend.kanbanboard.exceptions.ListNotFoundException;
 import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
-import com.backend.kanbanboard.repositories.CardRepository;
-import com.backend.kanbanboard.repositories.ListRepository;
+import com.backend.kanbanboard.services.KanbanService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,59 +18,41 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ListController {
-    private final ListRepository listRepo;
+    private final KanbanService kanbanService;
 
-    private final CardRepository cardRepo;
-
-    ListController(ListRepository listRepo, CardRepository cardRepo){
-        this.listRepo = listRepo;
-        this.cardRepo = cardRepo;
+    ListController(KanbanService kanbanService) {
+        this.kanbanService = kanbanService;
     }
 
     @GetMapping("/lists")
-    List<ListModel> all(){
-        return listRepo.findAll();
+    List<ListModel> all() {
+        return kanbanService.getAllLists();
     }
 
     @GetMapping("/lists/{id}")
-    ListModel one(@PathVariable Long id){
-        return listRepo.findById(id)
-                .orElseThrow(() -> new ListNotFoundException(id));
+    ListModel one(@PathVariable Long id) {
+        return kanbanService.getList(id);
     }
 
     @GetMapping("/lists/{id}/cards")
-    List<Card> oneWithCards(@PathVariable Long id){
-        ListModel list = listRepo.findById(id)
-                .orElseThrow(() -> new ListNotFoundException(id));
-        return cardRepo.findByListId(list.getId());
+    List<Card> oneWithCards(@PathVariable Long id) {
+        return kanbanService.getListCards(id);
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/lists")
-    ListModel newList(@RequestBody ListModel newList){
-        return listRepo.save(newList);
+    ListModel newList(@RequestBody ListModel newList) {
+        return kanbanService.createList(newList);
     }
 
     @PutMapping("/lists/{id}")
-    ListModel updateList(@RequestBody ListModel newList, @PathVariable Long id){
-        return listRepo.findById(id).map(list -> {
-            // Update relevant fields.
-            list.setName(newList.getName());
-            return listRepo.save(list);
-        }).orElseGet(() -> {
-            // Or create newList using id.
-            newList.setId(id);
-            return listRepo.save(newList);
-        });
-        
+    ListModel updateList(@RequestBody ListModel newList, @PathVariable Long id) {
+        return kanbanService.updateList(newList, id);
     }
 
     @DeleteMapping("/lists/{id}")
     void deleteCard(@PathVariable Long id) {
-        // First, delete any Cards connected to this List.
-        cardRepo.deleteByListId(id);
-
-        listRepo.deleteById(id);
+        kanbanService.deleteList(id);
     }
 
 }
