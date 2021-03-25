@@ -1,6 +1,9 @@
 package com.backend.kanbanboard;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,16 +11,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Optional;
-
+import com.backend.kanbanboard.models.Board;
 import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
-import com.backend.kanbanboard.repositories.CardRepository;
-import com.backend.kanbanboard.repositories.ListRepository;
+import com.backend.kanbanboard.services.KanbanService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -32,6 +33,15 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 @ActiveProfiles("test")
 public class CardControllerTests {
+    @InjectMocks
+    Card card;
+
+    @InjectMocks
+    ListModel list;
+
+    @InjectMocks
+    Board board;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -39,10 +49,7 @@ public class CardControllerTests {
     private ObjectMapper objmap;
 
     @MockBean
-    private CardRepository mockRepo;
-
-    @MockBean
-    private ListRepository mockListRepo;
+    private KanbanService kanbanService;
 
     @Test
     public void testGetAllCards() throws Exception {
@@ -51,41 +58,33 @@ public class CardControllerTests {
 
     @Test
     public void testGetCardById() throws Exception {
-        ListModel list = new ListModel("list1");
-        Card card = new Card("title", "description", list);
-        Mockito.doReturn(Optional.of(card)).when(mockRepo).findById(1L);
+        doReturn(card).when(kanbanService).getCard(1L);
 
         mockMvc.perform(get("/cards/1")).andExpect(status().isOk());
     }
 
     @Test
     public void testCreateCard() throws Exception {
-        ListModel list = new ListModel(1L, "list1");
-        Mockito.doReturn(Optional.of(list)).when(mockListRepo).findById(1L);
+        doReturn(card).when(kanbanService).createCard(any(Card.class));
+
         mockMvc.perform(post("/cards").contentType(MediaType.APPLICATION_JSON)
-                .content(objmap.writeValueAsString(new Card("Test Card 3", "blah", list))))
+                .content(objmap.writeValueAsString(card)))
                 .andExpect(status().isCreated());
     }
 
     @Test
     public void testCreateCardIdPropertyIsReadOnly() throws Exception {
-        ListModel list = new ListModel(1L, "list1");
-        Mockito.doReturn(Optional.of(list)).when(mockListRepo).findById(1L);
-        Card card1 = new Card("Test", "", list);
-        card1.setId(1L);
-
+        // TODO: Reevaluate this test. Not sure that it is working properly...
         mockMvc.perform(
-                post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card1)))
+                post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
                 .andExpect(jsonPath("$.id").doesNotExist());
     }
 
     @Test
     public void testUpdateCard() throws Exception {
-        ListModel list = new ListModel("list1");
-        Card card = new Card("Updated Test Card", "blash", list);
-        Mockito.doReturn(Optional.of(card)).when(mockRepo).findById(1L);
-
-        Mockito.when(mockRepo.save(any(Card.class))).thenReturn(card);
+        when(kanbanService.updateCard(any(Card.class), anyLong())).thenReturn(card);
+        card.setTitle("Updated Test Card");
+        card.setDescription("blash");
 
         mockMvc.perform(
                 put("/cards/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
