@@ -11,7 +11,6 @@ import com.backend.kanbanboard.services.KanbanService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,13 +18,11 @@ import org.springframework.test.context.ActiveProfiles;
 @SpringBootTest
 @ActiveProfiles("test")
 public class KanbanServiceImplTests {
-    @InjectMocks
+    
     private Card card;
-
-    @InjectMocks
+    
     private ListModel list;
 
-    @InjectMocks
     private Board board;
 
     @Autowired
@@ -33,25 +30,20 @@ public class KanbanServiceImplTests {
 
     @BeforeEach
     void init() {
-        board.setId(1L);
-        list.setId(1L);
-        list.setBoard(board);
-        card.setId(1L);
-        card.setList(list);
+        board = kanbanService.createBoard(new Board(1L, "board1"));
+        list = kanbanService.createList(new ListModel(1L, "list1", board));
+        card = kanbanService.createCard(new Card(1L, "card1", "", list));
     }
 
     @Test
     public void testDeleteListAndCardOnList() {
         // Make sure that when a ListModel is deleted,
         // then a Card on it is deleted as well.
-        kanbanService.createBoard(board);
-        kanbanService.createList(list);
-        kanbanService.createCard(card);
 
-        kanbanService.deleteList(1L);
+        kanbanService.deleteList(list.getId());
 
         assertThrows(CardNotFoundException.class, () -> {
-            kanbanService.getCard(1L);
+            kanbanService.getCard(card.getId());
         });
     }
 
@@ -59,14 +51,11 @@ public class KanbanServiceImplTests {
     public void testDeleteBoardAndListOnBoard() {
         // Make sure that when a Board is deleted,
         // then a ListModel on it is deleted as well.
-        kanbanService.createBoard(board);
-        kanbanService.createList(list);
-        kanbanService.createCard(card);
 
-        kanbanService.deleteBoard(1L);
+        kanbanService.deleteBoard(board.getId());
 
         assertThrows(ListNotFoundException.class, () -> {
-            kanbanService.getList(1L);
+            kanbanService.getList(list.getId());
         });
     }
 }
