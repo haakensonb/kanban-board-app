@@ -1,5 +1,6 @@
 package com.backend.kanbanboard;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.backend.kanbanboard.exceptions.CardNotFoundException;
@@ -57,5 +58,35 @@ public class KanbanServiceImplTests {
         assertThrows(ListNotFoundException.class, () -> {
             kanbanService.getList(list.getId());
         });
+    }
+
+    @Test
+    public void testUpdateCardDoesntOverwriteId(){
+        // Make sure that entity id can't be overwritten by user during PUT update.
+        Card newCard = new Card(100L, "newCard", "", list);
+
+        Card updatedCard = kanbanService.updateCard(newCard, card.getId());
+
+        assertEquals(card.getId(), updatedCard.getId());
+    }
+
+    @Test
+    public void testUpdateListDoesntOverwriteId(){
+        // Make sure that entity id can't be overwritten by user during PUT update.
+        ListModel newList = new ListModel(100L, "newList", board);
+
+        ListModel updatedList = kanbanService.updateList(newList, list.getId());
+
+        assertEquals(list.getId(), updatedList.getId());
+    }
+
+    @Test
+    public void testUpdateBoardDoesntOverwriteId(){
+        // Make sure that entity id can't be overwritten by user during PUT update.
+        Board newBoard = new Board(100L, "newBoard");
+
+        Board updatedBoard = kanbanService.updateBoard(newBoard, board.getId());
+
+        assertEquals(board.getId(), updatedBoard.getId());
     }
 }

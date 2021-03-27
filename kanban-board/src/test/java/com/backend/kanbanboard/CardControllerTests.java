@@ -17,6 +17,7 @@ import com.backend.kanbanboard.models.ListModel;
 import com.backend.kanbanboard.services.KanbanService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,14 @@ public class CardControllerTests {
     @MockBean
     private KanbanService kanbanService;
 
+    @BeforeEach
+    public void init(){
+        // Card and List Id can't be null because CardModelAssembler needs them.
+        card.setId(1L);
+        list.setId(1L);
+        card.setList(list);
+    }
+
     @Test
     public void testGetAllCards() throws Exception {
         mockMvc.perform(get("/cards")).andExpect(status().isOk());
@@ -65,7 +74,6 @@ public class CardControllerTests {
 
     @Test
     public void testCreateCard() throws Exception {
-        card.setId(1L);
         doReturn(card).when(kanbanService).createCard(any(Card.class));
 
         mockMvc.perform(post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
@@ -74,7 +82,6 @@ public class CardControllerTests {
 
     @Test
     public void testUpdateCard() throws Exception {
-        card.setId(1L);
         card.setTitle("Updated Test Card");
         card.setDescription("blash");
         when(kanbanService.updateCard(any(Card.class), anyLong())).thenReturn(card);
