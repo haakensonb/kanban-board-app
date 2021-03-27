@@ -3,6 +3,7 @@ package com.backend.kanbanboard.assemblers;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
+import com.backend.kanbanboard.controllers.BoardController;
 import com.backend.kanbanboard.controllers.ListController;
 import com.backend.kanbanboard.models.ListModel;
 
@@ -16,7 +17,9 @@ public class ListModelAssembler implements RepresentationModelAssembler<ListMode
     public EntityModel<ListModel> toModel(ListModel list){
         return EntityModel.of(list, 
             linkTo(methodOn(ListController.class).one(list.getId())).withSelfRel(),
-            linkTo(methodOn(ListController.class).all()).withRel("lists")
+            linkTo(methodOn(ListController.class).all()).withRel("lists"),
+            linkTo(methodOn(BoardController.class).one(list.getBoard().getId())).withRel("parentBoard"),
+            linkTo(methodOn(ListController.class).oneWithCards(list.getId())).withRel("listCards")
             );
     }
 }

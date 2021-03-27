@@ -4,6 +4,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import com.backend.kanbanboard.controllers.CardController;
+import com.backend.kanbanboard.controllers.ListController;
 import com.backend.kanbanboard.models.Card;
 
 import org.springframework.hateoas.EntityModel;
@@ -16,7 +17,8 @@ public class CardModelAssembler implements RepresentationModelAssembler<Card, En
     public EntityModel<Card> toModel(Card card){
         return EntityModel.of(card, 
             linkTo(methodOn(CardController.class).one(card.getId())).withSelfRel(),
-            linkTo(methodOn(CardController.class).all()).withRel("cards")
+            linkTo(methodOn(CardController.class).all()).withRel("cards"),
+            linkTo(methodOn(ListController.class).one(card.getList().getId())).withRel("parentList")
             );
     }
 }

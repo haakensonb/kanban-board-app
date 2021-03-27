@@ -9,6 +9,8 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -24,6 +26,7 @@ public class ListModel {
     @ManyToOne
     // ListModel will be deleted if Board is deleted.
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
     private Board board;
 
     public ListModel() {

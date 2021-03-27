@@ -16,7 +16,8 @@ public class BoardModelAssembler implements RepresentationModelAssembler<Board, 
     public EntityModel<Board> toModel(Board board){
         return EntityModel.of(board, 
             linkTo(methodOn(BoardController.class).one(board.getId())).withSelfRel(),
-            linkTo(methodOn(BoardController.class).all()).withRel("boards")
+            linkTo(methodOn(BoardController.class).all()).withRel("boards"),
+            linkTo(methodOn(BoardController.class).oneWithLists(board.getId())).withRel("boardLists")
             );
     }
 }
