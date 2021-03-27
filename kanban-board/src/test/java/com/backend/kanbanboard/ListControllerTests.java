@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.backend.kanbanboard.models.Board;
-import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
 import com.backend.kanbanboard.services.KanbanService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,8 +31,6 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @EnableWebMvc
 @ActiveProfiles("test")
 public class ListControllerTests {
-    @InjectMocks
-    private Card card;
 
     @InjectMocks
     private ListModel list;
@@ -64,6 +61,7 @@ public class ListControllerTests {
 
     @Test
     public void testCreateList() throws Exception {
+        list.setId(1L);
         doReturn(list).when(kanbanService).createList(any(ListModel.class));
 
         mockMvc.perform(post("/lists").contentType(MediaType.APPLICATION_JSON)
@@ -72,26 +70,19 @@ public class ListControllerTests {
     }
 
     @Test
-    public void testCreateListIdPropertyIsReadOnly() throws Exception {
-        // TODO: Reevaluate this test. Not sure that it is working properly...
-        mockMvc.perform(
-                post("/lists").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
-                .andExpect(jsonPath("$.id").doesNotExist());
-    }
-
-    @Test
     public void testUpdateList() throws Exception {
+        list.setId(1L);
         list.setName("list1");
         doReturn(list).when(kanbanService).updateList(any(ListModel.class), anyLong());
 
         mockMvc.perform(
                 put("/lists/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(list)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.name").value("list1"));
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.name").value("list1"));
     }
 
     @Test
     public void testDeleteList() throws Exception {
-        mockMvc.perform(delete("/lists/1")).andExpect(status().isOk());
+        mockMvc.perform(delete("/lists/1")).andExpect(status().isNoContent());
     }
 
 }
