@@ -3,7 +3,6 @@ package com.backend.kanbanboard;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -12,12 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.backend.kanbanboard.models.Board;
-import com.backend.kanbanboard.models.Card;
-import com.backend.kanbanboard.models.ListModel;
 import com.backend.kanbanboard.services.KanbanService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,15 +29,10 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 @AutoConfigureMockMvc
 @EnableWebMvc
 @ActiveProfiles("test")
-public class CardControllerTests {
-    @InjectMocks
-    Card card;
+public class BoardControllerTests {
 
     @InjectMocks
-    ListModel list;
-
-    @InjectMocks
-    Board board;
+    private Board board;
 
     @Autowired
     private MockMvc mockMvc;
@@ -52,48 +43,42 @@ public class CardControllerTests {
     @MockBean
     private KanbanService kanbanService;
 
-    @BeforeEach
-    public void init(){
-        // Card and List Id can't be null because CardModelAssembler needs them.
-        card.setId(1L);
-        list.setId(1L);
-        card.setList(list);
+    @Test
+    public void testGetAllBoards() throws Exception {
+        mockMvc.perform(get("/boards")).andExpect(status().isOk());
     }
 
     @Test
-    public void testGetAllCards() throws Exception {
-        mockMvc.perform(get("/cards")).andExpect(status().isOk());
+    public void testGetBoardById() throws Exception {
+        doReturn(board).when(kanbanService).getBoard(anyLong());
+
+        mockMvc.perform(get("/boards/1")).andExpect(status().isOk());
     }
 
     @Test
-    public void testGetCardById() throws Exception {
-        doReturn(card).when(kanbanService).getCard(1L);
+    public void testCreateBoard() throws Exception {
+        board.setId(1L);
+        doReturn(board).when(kanbanService).createBoard(any(Board.class));
 
-        mockMvc.perform(get("/cards/1")).andExpect(status().isOk());
-    }
-
-    @Test
-    public void testCreateCard() throws Exception {
-        doReturn(card).when(kanbanService).createCard(any(Card.class));
-
-        mockMvc.perform(post("/cards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
+        mockMvc.perform(
+                post("/boards").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(board)))
                 .andExpect(status().isCreated());
     }
 
     @Test
-    public void testUpdateCard() throws Exception {
-        card.setTitle("Updated Test Card");
-        card.setDescription("blash");
-        when(kanbanService.updateCard(any(Card.class), anyLong())).thenReturn(card);
+    public void testUpdateBoard() throws Exception {
+        board.setId(1L);
+        board.setName("board1");
+        doReturn(board).when(kanbanService).updateBoard(any(Board.class), anyLong());
 
         mockMvc.perform(
-                put("/cards/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(card)))
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.title").value("Updated Test Card"))
-                .andExpect(jsonPath("$.description").value("blash"));
+                put("/boards/1").contentType(MediaType.APPLICATION_JSON).content(objmap.writeValueAsString(board)))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.name").value("board1"));
     }
 
     @Test
-    public void testDeleteCard() throws Exception {
-        mockMvc.perform(delete("/cards/1")).andExpect(status().isNoContent());
+    public void testDeleteBoard() throws Exception {
+        mockMvc.perform(delete("/boards/1")).andExpect(status().isNoContent());
     }
+
 }

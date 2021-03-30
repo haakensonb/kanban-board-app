@@ -1,75 +1,85 @@
 package com.backend.kanbanboard.controllers;
 
-import java.util.List;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
-import com.backend.kanbanboard.exceptions.ListNotFoundException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.backend.kanbanboard.assemblers.CardModelAssembler;
+import com.backend.kanbanboard.assemblers.ListModelAssembler;
 import com.backend.kanbanboard.models.Card;
 import com.backend.kanbanboard.models.ListModel;
-import com.backend.kanbanboard.repositories.CardRepository;
-import com.backend.kanbanboard.repositories.ListRepository;
+import com.backend.kanbanboard.services.KanbanService;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class ListController {
-    private final ListRepository listRepo;
+    private final KanbanService kanbanService;
 
-    private final CardRepository cardRepo;
+    private final ListModelAssembler assembler;
 
-    ListController(ListRepository listRepo, CardRepository cardRepo){
-        this.listRepo = listRepo;
-        this.cardRepo = cardRepo;
+    private final CardModelAssembler cardAssembler;
+
+    public ListController(KanbanService kanbanService, ListModelAssembler assembler, CardModelAssembler cardAssembler) {
+        this.kanbanService = kanbanService;
+        this.assembler = assembler;
+        this.cardAssembler = cardAssembler;
     }
 
     @GetMapping("/lists")
-    List<ListModel> all(){
-        return listRepo.findAll();
+    public CollectionModel<EntityModel<ListModel>> all() {
+        List<EntityModel<ListModel>> lists = kanbanService.getAllLists().stream().map(assembler::toModel)
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(lists, linkTo(methodOn(ListController.class).all()).withSelfRel());
     }
 
     @GetMapping("/lists/{id}")
-    ListModel one(@PathVariable Long id){
-        return listRepo.findById(id)
-                .orElseThrow(() -> new ListNotFoundException(id));
+    public EntityModel<ListModel> one(@PathVariable Long id) {
+        ListModel list = kanbanService.getList(id);
+        return assembler.toModel(list);
     }
 
     @GetMapping("/lists/{id}/cards")
-    List<Card> oneWithCards(@PathVariable Long id){
-        ListModel list = listRepo.findById(id)
-                .orElseThrow(() -> new ListNotFoundException(id));
-        return cardRepo.findByListId(list.getId());
+    public CollectionModel<EntityModel<Card>> oneWithCards(@PathVariable Long id) {
+        List<EntityModel<Card>> cards = kanbanService.getListCards(id).stream().map(cardAssembler::toModel)
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(cards, linkTo(methodOn(ListController.class).oneWithCards(id)).withSelfRel());
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/lists")
-    ListModel newList(@RequestBody ListModel newList){
-        return listRepo.save(newList);
+    public ResponseEntity<?> newList(@RequestBody ListModel newList) {
+        EntityModel<ListModel> entityModel = assembler.toModel(kanbanService.createList(newList));
+
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
 
     @PutMapping("/lists/{id}")
-    ListModel updateList(@RequestBody ListModel newList, @PathVariable Long id){
-        return listRepo.findById(id).map(list -> {
-            // Update relevant fields.
-            list.setName(newList.getName());
-            return listRepo.save(list);
-        }).orElseGet(() -> {
-            // Or create newList using id.
-            newList.setId(id);
-            return listRepo.save(newList);
-        });
-        
+    public ResponseEntity<?> updateList(@RequestBody ListModel newList, @PathVariable Long id) {
+        EntityModel<ListModel> entityModel = assembler.toModel(kanbanService.updateList(newList, id));
+
+        // "created" may not be the best response code.
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
 
     @DeleteMapping("/lists/{id}")
-    void deleteCard(@PathVariable Long id) {
-        listRepo.deleteById(id);
+    public ResponseEntity<?> deleteCard(@PathVariable Long id) {
+        kanbanService.deleteList(id);
+
+        return ResponseEntity.noContent().build();
     }
 
 }
