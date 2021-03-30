@@ -1,68 +1,73 @@
 package com.backend.kanbanboard.controllers;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.backend.kanbanboard.exceptions.CardNotFoundException;
-import com.backend.kanbanboard.exceptions.ListNotFoundException;
+import com.backend.kanbanboard.assemblers.CardModelAssembler;
 import com.backend.kanbanboard.models.Card;
-import com.backend.kanbanboard.repositories.CardRepository;
-import com.backend.kanbanboard.repositories.ListRepository;
+import com.backend.kanbanboard.services.KanbanService;
 
-import org.springframework.http.HttpStatus;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.IanaLinkRelations;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class CardController {
-    private final CardRepository repo;
 
-    private final ListRepository listRepo;
+    private final KanbanService kanbanService;
 
-    CardController(CardRepository repo, ListRepository listRepo) {
-        this.repo = repo;
-        this.listRepo = listRepo;
+    private final CardModelAssembler assembler;
+
+    public CardController(KanbanService kanbanService, CardModelAssembler assembler) {
+        this.kanbanService = kanbanService;
+        this.assembler = assembler;
     }
 
     @GetMapping("/cards")
-    List<Card> all() {
-        return repo.findAll();
+    public CollectionModel<EntityModel<Card>> all() {
+        List<EntityModel<Card>> cards = kanbanService.getAllCards().stream()
+                .map(assembler::toModel)
+                .collect(Collectors.toList());
+
+        return CollectionModel.of(cards, linkTo(methodOn(CardController.class).all()).withSelfRel());
     }
 
     @GetMapping("/cards/{id}")
-    Card one(@PathVariable Long id) {
-        return repo.findById(id).orElseThrow(() -> new CardNotFoundException(id));
+    public EntityModel<Card> one(@PathVariable Long id) {
+        Card card = kanbanService.getCard(id);
+        return assembler.toModel(card);
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/cards")
-    Card newCard(@RequestBody Card newCard) {
-        Long listId = newCard.getList().getId();
-        // Make sure that card references a valid list before saving.
-        listRepo.findById(listId).orElseThrow(() -> new ListNotFoundException(listId));
-        
-        return repo.save(newCard);
+    public ResponseEntity<?> newCard(@RequestBody Card newCard) {
+        EntityModel<Card> entityModel = assembler.toModel(kanbanService.createCard(newCard));
+
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
 
     @PutMapping("/cards/{id}")
-    Card updateCard(@RequestBody Card newCard, @PathVariable Long id) {
-        return repo.findById(id).map(card -> {
-            card.setTitle(newCard.getTitle());
-            card.setDescription(newCard.getDescription());
-            return repo.save(card);
-        }).orElseGet(() -> {
-            newCard.setId(id);
-            return repo.save(newCard);
-        });
+    public ResponseEntity<?> updateCard(@RequestBody Card newCard, @PathVariable Long id) {
+        EntityModel<Card> entityModel = assembler.toModel(kanbanService.updateCard(newCard, id));
+
+        // "created" may not be the best response code.
+        return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
     }
 
     @DeleteMapping("/cards/{id}")
-    void deleteCard(@PathVariable Long id) {
-        repo.deleteById(id);
+    public ResponseEntity<?> deleteCard(@PathVariable Long id) {
+        kanbanService.deleteCard(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
