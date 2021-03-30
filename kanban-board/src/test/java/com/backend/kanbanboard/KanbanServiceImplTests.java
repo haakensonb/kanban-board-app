@@ -33,7 +33,7 @@ public class KanbanServiceImplTests {
     void init() {
         board = kanbanService.createBoard(new Board(1L, "board1"));
         list = kanbanService.createList(new ListModel(1L, "list1", board));
-        card = kanbanService.createCard(new Card(1L, "card1", "", list));
+        card = kanbanService.createCard(new Card(1L, "card1", "", list, 1));
     }
 
     @Test
@@ -63,7 +63,7 @@ public class KanbanServiceImplTests {
     @Test
     public void testUpdateCardDoesntOverwriteId(){
         // Make sure that entity id can't be overwritten by user during PUT update.
-        Card newCard = new Card(100L, "newCard", "", list);
+        Card newCard = new Card(100L, "newCard", "", list, 1);
 
         Card updatedCard = kanbanService.updateCard(newCard, card.getId());
 

@@ -25,8 +25,8 @@ public class LoadDatabase {
             log.info("Preloading " + board1);
             ListModel list1 = kanbanService.createList(new ListModel("Test List 1", board1));
             log.info("Preloading " + list1);
-            Card card1 = new Card("Test Card 1", "blash blah", list1);
-            Card card2 = new Card("Test Card 2", "blah blah blah", list1);
+            Card card1 = new Card("Test Card 1", "blash blah", list1, 1);
+            Card card2 = new Card("Test Card 2", "blah blah blah", list1, 2);
             log.info("Preloading " + kanbanService.createCard(card1));
             log.info("Preloading " + kanbanService.createCard(card2));
         };

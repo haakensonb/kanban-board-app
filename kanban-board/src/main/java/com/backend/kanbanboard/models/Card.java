@@ -29,6 +29,9 @@ public class Card {
 
     private String description;
 
+    // Used for ordering cards in a list.
+    private int rank;
+
     @ManyToOne
     @JoinColumn(nullable = false)
     // Card will be deleted if ListModel is deleted.
@@ -39,17 +42,19 @@ public class Card {
     public Card() {
     }
 
-    public Card(String title, String description, ListModel list) {
+    public Card(String title, String description, ListModel list, int rank) {
         this.title = title;
         this.description = description;
         this.list = list;
+        this.rank = rank;
     }
 
-    public Card(Long id, String title, String description, ListModel list) {
+    public Card(Long id, String title, String description, ListModel list, int rank) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.list = list;
+        this.rank = rank;
     }
 
     public Long getId() {
@@ -84,6 +89,14 @@ public class Card {
         this.description = description;
     }
 
+    public int getRank() {
+        return this.rank;
+    }
+
+    public void setRank(int newRank) {
+        this.rank = newRank;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == this)
@@ -93,18 +106,19 @@ public class Card {
         }
         Card card = (Card) o;
         return Objects.equals(id, card.id) && Objects.equals(title, card.title)
-                && Objects.equals(description, card.description) && Objects.equals(list, card.list);
+                && Objects.equals(description, card.description) && rank == card.rank
+                && Objects.equals(list, card.list);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, title, description, list);
+        return Objects.hash(id, title, description, rank, list);
     }
 
     @Override
     public String toString() {
         return "{" + " id='" + getId() + "'" + ", title='" + getTitle() + "'" + ", description='" + getDescription()
-                + "'" + ", list='" + getList() + "'" + "}";
+                + "'" + ", rank='" + getRank() + "'" + ", list='" + getList() + "'" + "}";
     }
 
 }
